@@ -1,0 +1,60 @@
+description: insert description here
+
+exp_param: 
+  WORK_DIR: None # */exp_000
+  ROOT: None # */src
+  exp_name: None # work dir name
+  raw_dirname: VOCdevkit/VOC2012
+  
+  debug: True
+  train_flag: True
+  infer_flag: True
+  log_flag: True
+
+  seeds: [0]
+
+train_param: 
+  model: SimpleSSD
+  batch_size: 8
+  num_workers: 0
+  #device: cuda:0
+  device: cpu
+  
+  tr_transform_params:
+    input_size: 512
+    color_mean: [104, 117, 123]
+  val_transform_params:
+    input_size: 512
+    color_mean: [104, 117, 123]
+
+  epochs: 1
+  early_stopping_steps: 5
+  verbose: 1
+
+  scheduler: CosineAnnealingWarmRestarts
+  scheduler_params:
+    T_0: 10
+    T_mult: 1
+    eta_min: 0.000001
+    last_epoch: -1
+    
+  optimizer: SGD
+  optimizer_params:
+    lr: 0.001
+    momentum: 0.9
+    weight_decay: 0.0005
+
+  model_cfg:
+    num_classes: 21
+    input_size: 512
+    feature_maps: [64, 32, 16, 8, 6, 4]
+    steps: [8, 16, 32, 64, 100, 300]
+    min_sizes: [30, 60, 111, 162, 213, 264]
+    max_sizes: [60, 111, 162, 213, 264, 315]
+    aspect_ratios: [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
+    bbox_aspect_num: [4, 6, 6, 6, 4, 4]
+  
+
+
+log_param:
+  mlflow: False
