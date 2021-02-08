@@ -1,4 +1,4 @@
-description: insert description here
+description: Simple SSD
 
 exp_param: 
   WORK_DIR: None # */exp_000
@@ -19,7 +19,7 @@ train_param:
   num_workers: 0
   #device: cuda:0
   device: cpu
-  
+
   tr_transform_params:
     input_size: 512
     color_mean: [104, 117, 123]
@@ -27,9 +27,13 @@ train_param:
     input_size: 512
     color_mean: [104, 117, 123]
 
-  epochs: 1
+  epochs: 100
   early_stopping_steps: 5
   verbose: 1
+
+  criterion_params:
+    jaccard_thresh: 0.5
+    neg_pos: 3
 
   scheduler: CosineAnnealingWarmRestarts
   scheduler_params:

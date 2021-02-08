@@ -7,10 +7,13 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import torch.nn.init as init
+from torch.optim import SGD, Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
 
 
-def run_training(model, trainloader, validloader, epochs, optimizer, scheduler, loss_fn, early_stopping_steps, verbose, device, seed, weight_path):
+def run_training(model, trainloader, validloader, epochs, optimizer, optimizer_params, scheduler, scheduler_params, loss_fn, early_stopping_steps, verbose, device, seed, weight_path):
+    optimizer = eval(optimizer)(model.parameters(), **optimizer_params)
+    scheduler = eval(scheduler)(optimizer, **scheduler_params)
     
     early_step = 0
     best_loss = np.inf
@@ -71,12 +74,13 @@ def train_fn(model, optimizer, scheduler, loss_fn, dataloader, device):
         loss.backward()  
         nn.utils.clip_grad_value_(model.parameters(), clip_value=2.0)
         optimizer.step()
+        final_loss += loss.item()
 
         if i % 10 == 0: 
             description = f"iteration {i} | time {time.time() - s:.4f} | avg loss {final_loss / (i+1):.16f}"
             pbar.set_description(description)
 
-        final_loss += loss.item()
+        
         
     final_loss /= len(dataloader)
     return final_loss

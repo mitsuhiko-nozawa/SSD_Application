@@ -1,32 +1,24 @@
-from utils import seed_everything
 from .base_model import BaseModel
 from .networks import *
 from .run_utils import run_training, inference_fn
 from .criterion import MultiBoxLoss
 
-
 import os.path as osp
 import torch
-import torch.nn as nn
-from torch.optim import Adam, SGD
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
-
 
 
 class ObjectDetectionModel(BaseModel):
     def fit(self, trainloader, validloader):
-
-        optimizer = eval(self.optimizer)(self.model.parameters(), **self.params["optimizer_params"])
-        scheduler = eval(self.scheduler)(optimizer, **self.params["scheduler_params"])
-        criterion = MultiBoxLoss(jaccard_thresh=0.5, neg_pos=3, device=self.device)
-
+        criterion = MultiBoxLoss(**self.params["criterion_params"], device=self.device)
         self.val_preds = run_training(
             model=self.model,
             trainloader=trainloader,
             validloader=validloader,
             epochs=self.epochs,
-            optimizer=optimizer,
-            scheduler=scheduler,
+            optimizer=self.optimizer,
+            optimizer_params=self.params["optimizer_params"],
+            scheduler=self.scheduler,
+            scheduler_params=self.params["scheduler_params"],
             loss_fn=criterion,
             early_stopping_steps=self.early_stopping_steps,
             verbose=self.verbose,
@@ -38,6 +30,7 @@ class ObjectDetectionModel(BaseModel):
     def predict(self, testloader):
         preds = inference_fn(self.model, testloader, self.device)
         return preds
+        
     def read_weight(self):
         fname = f"seed_{self.seed}.pt"
         self.model.load_state_dict(torch.load( osp.join(self.weight_path, fname) ))
@@ -57,13 +50,11 @@ class ObjectDetectionModel(BaseModel):
         self.seed = self.params["seed"]
         self.phase = self.params["phase"]
 
-
         self.optimizer = self.params["optimizer"]
         self.scheduler = self.params["scheduler"]
 
-    def get_model(self):
-        model = SSD(self.phase, self.params["model_cfg"])
+    def get_model(self, model_name):
+        model = eval(model_name)(self.phase, self.params["model_cfg"])
         model.to(self.device)
         return model
-    
     

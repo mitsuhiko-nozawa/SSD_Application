@@ -8,10 +8,9 @@ from models import ObjectDetectionModel
 
 class Train(BaseManager):
     def __call__(self):
-        # cvで画像を分ける
         print("Training")
         if self.get("train_flag"):
-            for seed in self.seeds: # train by seed
+            for seed in self.seeds: 
                 self.train_by_seed(seed)
 
     def train_by_seed(self, seed):
@@ -22,6 +21,7 @@ class Train(BaseManager):
             train_anno_list = train_anno_list[:2]
             val_img_list = val_img_list[:2]
             val_anno_list = val_anno_list[:2]
+            self.params["epochs"] = 1
 
         train_dataset = TrainDataset(
             train_img_list, 

@@ -9,9 +9,9 @@ from torch.autograd import Function
 from .make_module import make_vgg, make_extras, make_loc_conf, L2Norm
 
 # SSDクラスを作成する
-class SSD(nn.Module):
+class SimpleSSD(nn.Module):
     def __init__(self, phase, cfg):
-        super(SSD, self).__init__()
+        super(SimpleSSD, self).__init__()
 
         self.phase = phase  # train or inferenceを指定
         self.num_classes = cfg["num_classes"]  # クラス数=21

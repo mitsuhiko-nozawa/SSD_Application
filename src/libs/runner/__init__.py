@@ -5,4 +5,4 @@ from runner.runner import Runner
 
 from utils import *
 from dataset import *
-from models.models import *
+from models import *
