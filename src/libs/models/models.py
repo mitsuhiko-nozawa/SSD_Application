@@ -1,7 +1,9 @@
+from utils import seed_everything
 from .base_model import BaseModel
 from .networks import *
-from utils import seed_everything
-from utils_torch import MultiBoxLoss, run_training, inference_fn
+from .run_utils import run_training, inference_fn
+from .criterion import MultiBoxLoss
+
 
 import os.path as osp
 import torch
@@ -11,7 +13,7 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealin
 
 
 
-class BaseObjectDetectionModel(BaseModel):
+class ObjectDetectionModel(BaseModel):
     def fit(self, trainloader, validloader):
 
         optimizer = eval(self.optimizer)(self.model.parameters(), **self.params["optimizer_params"])
@@ -48,7 +50,7 @@ class BaseObjectDetectionModel(BaseModel):
         self.WORK_DIR = self.params["WORK_DIR"]
         self.weight_path = osp.join(self.WORK_DIR, "weight")
 
-        self.device = self.params["device"]
+        self.device = torch.device(self.params["device"] if torch.cuda.is_available() else "cpu")
         self.epochs = self.params["epochs"]
         self.early_stopping_steps = self.params["early_stopping_steps"]
         self.verbose = self.params["verbose"]
@@ -58,10 +60,10 @@ class BaseObjectDetectionModel(BaseModel):
 
         self.optimizer = self.params["optimizer"]
         self.scheduler = self.params["scheduler"]
-    
-    
-class SimpleSSD(BaseObjectDetectionModel):
+
     def get_model(self):
         model = SSD(self.phase, self.params["model_cfg"])
         model.to(self.device)
         return model
+    
+    

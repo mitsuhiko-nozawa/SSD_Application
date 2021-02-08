@@ -1,21 +1,12 @@
-import sys, os
 import os.path as osp
 import pandas as pd
-import torch
-from torch.utils.data import DataLoader
 
 from .manager import BaseManager
 from utils import seed_everything, make_datapath_list
-#from utils_torch import get_transforms
-from dataset import TestDataset, DataTransform
-from models import *
+from dataset import TestDataset, Anno_xml2list, DataTransform, od_collate_fn, get_dataloader
+from models import ObjectDetectionModel
 
 class Infer(BaseManager):
-    def __init__(self, params):
-        super(Infer, self).__init__(params)
-        self.device = torch.device(params["device"] if torch.cuda.is_available() else "cpu")
-        self.model = params["model"]
-
     def __call__(self):
         print("Inference")
         if self.get("infer_flag"):
@@ -29,18 +20,19 @@ class Infer(BaseManager):
                 phase="val", 
                 transform=DataTransform(**self.get("val_transform_params")),
             )
-            testloader = DataLoader(
+            testloader = get_dataloader(
                 test_dataset, 
                 batch_size=self.get("batch_size"), 
                 num_workers=self.get("num_workers"), 
                 shuffle=False, 
+                drop_last=False
             )
 
             for seed in self.seeds:
                 self.params["seed"] = seed
                 self.params["phase"] = "inference" 
                 
-                model = eval(self.model)(self.params)
+                model = ObjectDetectionModel(self.params)
                 model.read_weight()
                 preds = model.predict(testloader)
                 print(type(preds))

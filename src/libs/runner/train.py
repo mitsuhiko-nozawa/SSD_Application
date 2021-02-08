@@ -1,22 +1,12 @@
-import sys, os
 import os.path as osp
 import pandas as pd
-import torch
-from torch.utils.data import DataLoader
 
 from .manager import BaseManager
 from utils import seed_everything, make_datapath_list
-#from utils_torch import get_transforms
-from dataset import TrainDataset, Anno_xml2list, DataTransform, od_collate_fn
-from models import *
+from dataset import TrainDataset, Anno_xml2list, DataTransform, od_collate_fn, get_dataloader
+from models import ObjectDetectionModel
 
 class Train(BaseManager):
-    def __init__(self, params):
-        super(Train, self).__init__(params)
-        self.device = torch.device(params["device"] if torch.cuda.is_available() else "cpu")
-        self.model = params["model"]
-
-        
     def __call__(self):
         # cvで画像を分ける
         print("Training")
@@ -47,24 +37,26 @@ class Train(BaseManager):
             transform=DataTransform(**self.get("val_transform_params")),
             transform_anno=Anno_xml2list(self.voc_classes)
         )
-        trainloader = DataLoader(
-            train_dataset, 
+        trainloader = get_dataloader(
+            dataset=train_dataset, 
             batch_size=self.get("batch_size"), 
             num_workers=self.get("num_workers"), 
             shuffle=True, 
             collate_fn=od_collate_fn,
+            drop_last=False
         )
-        validloader = DataLoader(
-            val_dataset, 
+        validloader = get_dataloader(
+            dataset=val_dataset, 
             batch_size=self.get("batch_size"), 
             num_workers=self.get("num_workers"), 
             shuffle=False, 
             collate_fn=od_collate_fn,
+            drop_last=False
         )
         self.params["seed"] = seed
         self.params["phase"] = "train" 
         
-        model = eval(self.model)(self.params)
+        model = ObjectDetectionModel(self.params)
         model.fit(trainloader, validloader)
         # valid predict, no detect, 最後にdetectしてもいいかもね
         val_preds = model.val_preds

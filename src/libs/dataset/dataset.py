@@ -5,10 +5,7 @@ from math import sqrt as sqrt
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
-import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
-from torch.autograd import Function
+
 import torch.utils.data as data
 import torch
 import cv2
@@ -139,3 +136,13 @@ class TestDataset(data.Dataset):
         img = torch.from_numpy(img[:, :, (2, 1, 0)]).permute(2, 0, 1)
         return img
 
+def get_dataloader(dataset, batch_size, num_workers, shuffle, drop_last, collate_fn=None):
+    dataloader = data.DataLoader(
+        dataset=dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=shuffle,
+        collate_fn=collate_fn,
+        drop_last=drop_last,
+    )
+    return dataloader
