@@ -35,5 +35,8 @@ class Infer(BaseManager):
                 model = ObjectDetectionModel(self.params)
                 model.read_weight()
                 preds = model.predict(testloader)
-                print(type(preds))
-                print(preds.shape)
+                try:
+                    print(type(preds))
+                    print(preds.shape)
+                except:
+                    pass

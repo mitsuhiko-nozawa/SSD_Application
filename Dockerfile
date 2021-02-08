@@ -30,6 +30,7 @@ RUN pip install jupyter jupyter-contrib-nbextensions jupyter_nbextensions_config
 RUN pip install pytest
 RUN pip install nose
 RUN pip install Flask
+RUN pip install streamlit
 RUN pip install tqdm
 RUN pip install torchsummary
 RUN pip install hydra-core

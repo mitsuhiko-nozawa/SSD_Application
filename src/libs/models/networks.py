@@ -137,6 +137,8 @@ class Detect(Function):
         self.nms_thresh = nms_thresh  # nm_supressionでIOUがnms_thresh=0.45より大きいと、同一物体へのBBoxとみなす
 
     def forward(self, loc_data, conf_data, dbox_list):
+        loc_data = loc_data.to('cpu').detach()
+        conf_data = conf_data.to('cpu').detach()
         # 各サイズを取得
         num_batch = loc_data.size(0)  # ミニバッチのサイズ
         num_dbox = loc_data.size(1)  # DBoxの数 = XXXX

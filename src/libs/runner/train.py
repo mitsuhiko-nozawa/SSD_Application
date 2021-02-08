@@ -60,9 +60,12 @@ class Train(BaseManager):
         model.fit(trainloader, validloader)
         # valid predict, no detect, 最後にdetectしてもいいかもね
         val_preds = model.val_preds
-        print(val_preds[0].shape)
-        print(val_preds[1].shape)
-        print(val_preds[2].shape)
+        try:
+            print(val_preds[0].shape)
+            print(val_preds[1].shape)
+            print(val_preds[2].shape)
+        except:
+            pass
         #val_preds = pd.DataFrame(val_preds, columns=[f"pred_{n}" for n in range(self.params["output_size"])])
         #val_preds.to_csv(osp.join(self.val_preds_path, f"preds_{seed}_{fold}.csv"), index=False)
 
