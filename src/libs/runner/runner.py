@@ -4,13 +4,6 @@ from ._logging import Logging
 
 
 class Runner():
-    """
-    全体の工程
-    ・特徴量作成
-    ・データの読み出し
-    ・学習、weightと特徴量の名前の保存
-    ・ログ(mlflow, feature_importances, )
-    """
     def __init__(self, param):
         self.exp_param = param["exp_param"]
         self.train_param = param["train_param"]

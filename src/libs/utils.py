@@ -4,6 +4,8 @@ import random
 import numpy as np
 import pandas as pd
 import torch
+from pathlib import Path
+
 
 def seed_everything(seed=42):
     random.seed(seed)
@@ -18,30 +20,34 @@ def seed_everything(seed=42):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = True
 
-def intersect_(box_a, box_b):
-    max_xy = np.minimum(box_a[:, 2:], box_b[2:])
-    min_xy = np.maximum(box_a[:, :2], box_b[:2])
-    inter = np.clip((max_xy - min_xy), a_min=0, a_max=np.inf)
-    return inter[:, 0] * inter[:, 1]
 
+def make_datapath_list(rootpath):
+    rootpath = Path(rootpath)
 
-# https://mathwords.net/iou
+    voc2012_img_dir = Path(rootpath) / "JPEGImages"
+    voc2012_anno_dir = Path(rootpath) / "Annotations"
+    if not voc2012_img_dir.exists():
+        raise Errors.FileNotFound(voc2012_img_dir)
+    if not voc2012_anno_dir.exists():
+        raise Errors.FileNotFound(voc2012_img_dir)
 
-def jaccard_numpy(box_a, box_b):
-    """Compute the jaccard overlap of two sets of boxes.  The jaccard overlap
-    is simply the intersection over union of two boxes.
-    E.g.:
-        A ∩ B / A ∪ B = A ∩ B / (area(A) + area(B) - A ∩ B)
-    Args:
-        box_a: Multiple bounding boxes, Shape: [num_boxes,4]
-        box_b: Single bounding box, Shape: [4]
-    Return:
-        jaccard overlap: Shape: [box_a.shape[0], box_a.shape[1]]
-    """
-    inter = intersect_(box_a, box_b)
-    area_a = ((box_a[:, 2]-box_a[:, 0]) *
-              (box_a[:, 3]-box_a[:, 1]))  # [A,B]
-    area_b = ((box_b[2]-box_b[0]) *
-              (box_b[3]-box_b[1]))  # [A,B]
-    union = area_a + area_b - inter
-    return inter / union  # [A,B]
+    id_names_root = rootpath / "ImageSets" / "Main"
+    train_id_names = id_names_root / "train.txt"
+    val_id_names = id_names_root / "val.txt"
+
+    def glob_file_names_from_(id_names_file):
+        img_list = []
+        anno_list = []
+        for line in open(id_names_file):
+            file_id = line.strip() # 空白スペースと改行を除去
+            img_list.append(str(voc2012_img_dir / f"{file_id}.jpg"))
+            anno_list.append(str(voc2012_anno_dir / f"{file_id}.xml"))
+        return img_list, anno_list
+    ret = glob_file_names_from_(train_id_names)
+    train_img_list = ret[0]
+    train_anno_list = ret[1]
+    ret = glob_file_names_from_(val_id_names)
+    val_img_list = ret[0]
+    val_anno_list = ret[1]
+
+    return train_img_list, train_anno_list, val_img_list, val_anno_list

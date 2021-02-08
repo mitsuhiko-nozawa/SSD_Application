@@ -5,7 +5,7 @@ import numpy as np
 import types
 from numpy import random
 
-from utils import jaccard_numpy
+#from utils import jaccard_numpy
 
 class Compose(object):
     """Composes several augmentations together.
@@ -398,3 +398,28 @@ class PhotometricDistort(object):
             distort = Compose(self.pd[1:])
         im, boxes, labels = distort(im, boxes, labels)
         return self.rand_light_noise(im, boxes, labels)
+
+def jaccard_numpy(box_a, box_b):
+    """Compute the jaccard overlap of two sets of boxes.  The jaccard overlap
+    is simply the intersection over union of two boxes.
+    E.g.:
+        A ∩ B / A ∪ B = A ∩ B / (area(A) + area(B) - A ∩ B)
+    Args:
+        box_a: Multiple bounding boxes, Shape: [num_boxes,4]
+        box_b: Single bounding box, Shape: [4]
+    Return:
+        jaccard overlap: Shape: [box_a.shape[0], box_a.shape[1]]
+    """
+    inter = intersect_(box_a, box_b)
+    area_a = ((box_a[:, 2]-box_a[:, 0]) *
+              (box_a[:, 3]-box_a[:, 1]))  # [A,B]
+    area_b = ((box_b[2]-box_b[0]) *
+              (box_b[3]-box_b[1]))  # [A,B]
+    union = area_a + area_b - inter
+    return inter / union  # [A,B]
+
+def intersect_(box_a, box_b):
+    max_xy = np.minimum(box_a[:, 2:], box_b[2:])
+    min_xy = np.maximum(box_a[:, :2], box_b[:2])
+    inter = np.clip((max_xy - min_xy), a_min=0, a_max=np.inf)
+    return inter[:, 0] * inter[:, 1]

@@ -5,9 +5,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from .manager import BaseManager
-from utils import seed_everything
+from utils import seed_everything, make_datapath_list
 #from utils_torch import get_transforms
-from dataset import VOCDataset, make_datapath_list, Anno_xml2list, DataTransform, od_collate_fn
+from dataset import TrainDataset, Anno_xml2list, DataTransform, od_collate_fn
 from models import *
 
 class Train(BaseManager):
@@ -33,14 +33,14 @@ class Train(BaseManager):
             val_img_list = val_img_list[:2]
             val_anno_list = val_anno_list[:2]
 
-        train_dataset = VOCDataset(
+        train_dataset = TrainDataset(
             train_img_list, 
             train_anno_list, 
             phase="train", 
             transform=DataTransform(**self.get("tr_transform_params")),
             transform_anno=Anno_xml2list(self.voc_classes)
         )
-        val_dataset = VOCDataset(
+        val_dataset = TrainDataset(
             val_img_list, 
             val_anno_list, 
             phase="val", 
@@ -66,8 +66,11 @@ class Train(BaseManager):
         
         model = eval(self.model)(self.params)
         model.fit(trainloader, validloader)
-        # valid predict
-        #val_preds = model.val_preds
+        # valid predict, no detect, 最後にdetectしてもいいかもね
+        val_preds = model.val_preds
+        print(val_preds[0].shape)
+        print(val_preds[1].shape)
+        print(val_preds[2].shape)
         #val_preds = pd.DataFrame(val_preds, columns=[f"pred_{n}" for n in range(self.params["output_size"])])
         #val_preds.to_csv(osp.join(self.val_preds_path, f"preds_{seed}_{fold}.csv"), index=False)
 

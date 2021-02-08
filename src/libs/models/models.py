@@ -59,8 +59,7 @@ class BaseObjectDetectionModel(BaseModel):
         self.optimizer = self.params["optimizer"]
         self.scheduler = self.params["scheduler"]
     
-
-
+    
 class SimpleSSD(BaseObjectDetectionModel):
     def get_model(self):
         model = SSD(self.phase, self.params["model_cfg"])

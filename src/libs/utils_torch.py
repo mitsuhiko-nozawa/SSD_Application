@@ -1,6 +1,7 @@
 import time
 import os.path as osp
 import numpy as np
+from tqdm import tqdm
 
 import torch
 from torch import nn
@@ -10,40 +11,16 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealin
 
 
 def point_form(boxes):
-    """ Convert prior_boxes to (xmin, ymin, xmax, ymax)
-    representation for comparison to point form ground truth data.
-    Args:
-        boxes: (tensor) center-size default boxes from priorbox layers.
-    Return:
-        boxes: (tensor) Converted xmin, ymin, xmax, ymax form of boxes.
-    """
     return torch.cat((boxes[:, :2] - boxes[:, 2:]/2,     # xmin, ymin
                      boxes[:, :2] + boxes[:, 2:]/2), 1)  # xmax, ymax
 
 
 def center_size(boxes):
-    """ Convert prior_boxes to (cx, cy, w, h)
-    representation for comparison to center-size form ground truth data.
-    Args:
-        boxes: (tensor) point_form boxes
-    Return:
-        boxes: (tensor) Converted xmin, ymin, xmax, ymax form of boxes.
-    """
     return torch.cat((boxes[:, 2:] + boxes[:, :2])/2,  # cx, cy
                      boxes[:, 2:] - boxes[:, :2], 1)  # w, h
 
 
 def intersect(box_a, box_b):
-    """ We resize both tensors to [A,B,2] without new malloc:
-    [A,2] -> [A,1,2] -> [A,B,2]
-    [B,2] -> [1,B,2] -> [A,B,2]
-    Then we compute the area of intersect between box_a and box_b.
-    Args:
-      box_a: (tensor) bounding boxes, Shape: [A,4].
-      box_b: (tensor) bounding boxes, Shape: [B,4].
-    Return:
-      (tensor) intersection area, Shape: [A,B].
-    """
     A = box_a.size(0)
     B = box_b.size(0)
     max_xy = torch.min(box_a[:, 2:].unsqueeze(1).expand(A, B, 2),
@@ -55,17 +32,6 @@ def intersect(box_a, box_b):
 
 
 def jaccard(box_a, box_b):
-    """Compute the jaccard overlap of two sets of boxes.  The jaccard overlap
-    is simply the intersection over union of two boxes.  Here we operate on
-    ground truth boxes and default boxes.
-    E.g.:
-        A ∩ B / A ∪ B = A ∩ B / (area(A) + area(B) - A ∩ B)
-    Args:
-        box_a: (tensor) Ground truth bounding boxes, Shape: [num_objects,4]
-        box_b: (tensor) Prior boxes from priorbox layers, Shape: [num_priors,4]
-    Return:
-        jaccard overlap: (tensor) Shape: [box_a.size(0), box_b.size(0)]
-    """
     inter = intersect(box_a, box_b)
     area_a = ((box_a[:, 2]-box_a[:, 0]) *
               (box_a[:, 3]-box_a[:, 1])).unsqueeze(1).expand_as(inter)  # [A,B]
@@ -76,22 +42,6 @@ def jaccard(box_a, box_b):
 
 
 def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
-    """Match each prior box with the ground truth box of the highest jaccard
-    overlap, encode the bounding boxes, then return the matched indices
-    corresponding to both confidence and location preds.
-    Args:
-        threshold: (float) The overlap threshold used when mathing boxes.
-        truths: (tensor) Ground truth boxes, Shape: [num_obj, num_priors].
-        priors: (tensor) Prior boxes from priorbox layers, Shape: [n_priors,4].
-        variances: (tensor) Variances corresponding to each prior coord,
-            Shape: [num_priors, 4].
-        labels: (tensor) All the class labels for the image, Shape: [num_obj].
-        loc_t: (tensor) Tensor to be filled w/ endcoded location targets.
-        conf_t: (tensor) Tensor to be filled w/ matched indices for conf preds.
-        idx: (int) current batch index
-    Return:
-        The matched indices corresponding to 1)location and 2)confidence preds.
-    """
     # jaccard index
     overlaps = jaccard(
         truths,
@@ -120,18 +70,6 @@ def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
 
 
 def encode(matched, priors, variances):
-    """Encode the variances from the priorbox layers into the ground truth boxes
-    we have matched (based on jaccard overlap) with the prior boxes.
-    Args:
-        matched: (tensor) Coords of ground truth for each prior in point-form
-            Shape: [num_priors, 4].
-        priors: (tensor) Prior boxes in center-offset form
-            Shape: [num_priors,4].
-        variances: (list[float]) Variances of priorboxes
-    Return:
-        encoded boxes (tensor), Shape: [num_priors, 4]
-    """
-
     # dist b/t match center and prior's center
     g_cxcy = (matched[:, :2] + matched[:, 2:])/2 - priors[:, :2]
     # encode variance
@@ -181,20 +119,11 @@ def make_extras():
     layers = []
     in_channels = 1024  # vggモジュールから出力された、extraに入力される画像チャネル数
 
-    # -----------------------
-    # 問題 
-    # -----------------------
-    # extraモジュールの畳み込み層のチャネル数を設定するコンフィギュレーションの
-    # 層の構造をリストで定義してください
     cfg = [256, 512, 
            128, 256, 
            128, 256, 
            128, 256]
 
-    # -----------------------
-    # 問題 
-    # -----------------------
-    # 上記で定義したconfigを用いて、layesを定義してください
     layers += [nn.Conv2d(in_channels, cfg[0], kernel_size=(1))]
     layers += [nn.Conv2d(cfg[0], cfg[1], kernel_size=(3), stride=2, padding=1)]
     layers += [nn.Conv2d(cfg[1], cfg[2], kernel_size=(1))]
@@ -204,8 +133,8 @@ def make_extras():
     layers += [nn.Conv2d(cfg[5], cfg[6], kernel_size=(1))]
     layers += [nn.Conv2d(cfg[6], cfg[7], kernel_size=(3))]
 
-
     return nn.ModuleList(layers)
+
 
 def make_loc_conf(num_classes=21, bbox_aspect_num=(4, 6, 6, 6, 4, 4)):
     loc_layers = []
@@ -235,6 +164,7 @@ def make_loc_conf(num_classes=21, bbox_aspect_num=(4, 6, 6, 6, 4, 4)):
 
     return nn.ModuleList(loc_layers), nn.ModuleList(cnf_layers)
 
+
 class L2Norm(nn.Module):
     def __init__(self, input_channels=512, scale=20):
         super(L2Norm, self).__init__()  # 親クラスのコンストラクタ実行
@@ -244,29 +174,17 @@ class L2Norm(nn.Module):
         self.eps = 1e-10
 
     def reset_parameters(self):
-        '''結合パラメータを大きさscaleの値にする初期化を実行'''
         init.constant_(self.weight, self.scale)  # weightの値がすべてscale（=20）になる
 
     def forward(self, x):
-        '''38×38の特徴量に対して、512チャネルにわたって2乗和のルートを求めた
-        38×38個の値を使用し、各特徴量を正規化してから係数をかけ算する層'''
-
-        # 各チャネルにおける38×38個の特徴量のチャネル方向の2乗和を計算し、
-        # さらにルートを求め、割り算して正規化する
-        # normのテンソルサイズはtorch.Size([batch_num, 1, 38, 38])になります
         norm = x.pow(2).sum(dim=1, keepdim=True).sqrt() + self.eps
         x = torch.div(x, norm)
 
-        # 係数をかける。係数はチャネルごとに1つで、512個の係数を持つ
-        # self.weightのテンソルサイズはtorch.Size([512])なので
-        # torch.Size([batch_num, 512, 38, 38])まで変形します
         weights = self.weight.unsqueeze(
             0).unsqueeze(2).unsqueeze(3).expand_as(x)
         out = weights * x
 
         return out
-
-
 
 
 class MultiBoxLoss(nn.Module):
@@ -338,6 +256,7 @@ class MultiBoxLoss(nn.Module):
 
         return loss_l, loss_c
 
+
 def run_training(model, trainloader, validloader, epochs, optimizer, scheduler, loss_fn, early_stopping_steps, verbose, device, seed, weight_path):
     
     early_step = 0
@@ -349,7 +268,8 @@ def run_training(model, trainloader, validloader, epochs, optimizer, scheduler, 
     t = time.time() - start
     for epoch in range(epochs):
         train_loss = train_fn(model, optimizer, scheduler, loss_fn, trainloader, device)
-        valid_loss = valid_fn(model, loss_fn, validloader, device)
+        valid_preds = valid_fn(model, loss_fn, validloader, device)
+        valid_loss = valid_preds[0]
 
         # scheduler step
         if isinstance(scheduler, ReduceLROnPlateau):
@@ -365,6 +285,7 @@ def run_training(model, trainloader, validloader, epochs, optimizer, scheduler, 
         
         if valid_loss < best_loss:
             best_loss = valid_loss
+            best_val_preds = valid_preds
             torch.save(model.state_dict(), osp.join( weight_path,  f"seed_{seed}.pt") )
             early_step = 0
             best_epoch = epoch
@@ -374,18 +295,20 @@ def run_training(model, trainloader, validloader, epochs, optimizer, scheduler, 
             if (early_step >= early_stopping_steps):
                 t = time.time() - start
                 print(f"early stopping in iteration {epoch},  : best itaration is {best_epoch}, valid loss is {best_loss}, time: {t}")
-                return 0
+                return best_val_preds[1:]
 
     t = time.time() - start       
     print(f"training until max epoch {epochs},  : best itaration is {best_epoch}, valid loss is {best_loss}, time: {t}")
-    return 0
+    return best_val_preds[1:]
 
 def train_fn(model, optimizer, scheduler, loss_fn, dataloader, device):
     model.train()
     final_loss = 0
-    for images, targets in dataloader:
+    s = time.time()
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader))
+
+    for i, (images, targets) in pbar:
         optimizer.zero_grad()
-        torch.autograd.set_detect_anomaly(True)
         images = images.to(device)
         targets = [ann.to(device) for ann in targets]  # リストの各要素のテンソルをGPUへ
 
@@ -396,13 +319,10 @@ def train_fn(model, optimizer, scheduler, loss_fn, dataloader, device):
         nn.utils.clip_grad_value_(model.parameters(), clip_value=2.0)
         optimizer.step()
 
-        #if (iteration % 10 == 0):  # 10iterに1度、lossを表示
-        #    t_iter_finish = time.time()
-        #    duration = t_iter_finish - t_iter_start
-        #    print('イテレーション {} || Loss: {:.4f} || 10iter: {:.4f} sec.'.format(iteration, loss.item(), duration))
-        #    t_iter_start = time.time()
+        if i % 10 == 0: 
+            description = f"iteration {i} | time {time.time() - s:.4f} | avg loss {final_loss / (i+1):.16f}"
+            pbar.set_description(description)
 
-        #iteration += 1
         final_loss += loss.item()
         
     final_loss /= len(dataloader)
@@ -412,32 +332,48 @@ def train_fn(model, optimizer, scheduler, loss_fn, dataloader, device):
 def valid_fn(model, loss_fn, dataloader, device):
     model.eval()
     final_loss = 0
-    valid_preds = []
-    
-    for images, targets in dataloader:
-        images = images.to(device)
-        targets = [ann.to(device) for ann in targets]
-        outputs = model(images)
-        loss_l, loss_c = loss_fn(outputs, targets)
-        loss = loss_l + loss_c
-        final_loss += loss.item()
+    valid_loc = []
+    valid_conf = []
+    valid_dbox = []
+    s = time.time()
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader))
+    with torch.no_grad():
+        for i, (images, targets) in pbar:
+            images = images.to(device)
+            targets = [ann.to(device) for ann in targets]
+            outputs = model(images)
+            valid_loc.append(outputs[0].to('cpu').detach().numpy().copy())
+            valid_conf.append(outputs[1].to('cpu').detach().numpy().copy())
+            valid_dbox = outputs[2]
+
+            loss_l, loss_c = loss_fn(outputs, targets)
+            loss = loss_l + loss_c
+            final_loss += loss.item()
+            if i % 10 == 0: 
+                description = f"iteration {i} | time {time.time() - s:.4f} | avg loss {final_loss / (i+1):.16f}"
+                pbar.set_description(description)
         
     final_loss /= len(dataloader)
+    valid_loc = np.concatenate(valid_loc)
+    valid_conf = np.concatenate(valid_conf)    
     
-    return final_loss
+    return final_loss, valid_loc, valid_conf, valid_dbox
 
 
-def inference_fn(model, dataloader, device):
+def inference_fn(model, dataloader, device): # need debug
     model.eval()
-    model.to(device)
     preds = []
-    for images, targets in dataloader:
-        images = images.to(device)
-        targets = [ann.to(device) for ann in targets]
-        with torch.no_grad():
+    s = time.time()
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader))
+    with torch.no_grad():
+        for i, images in pbar:
+            images = images.to(device)
             outputs = model(images)
-        preds.append(outputs)
-        
+            preds.append(outputs)
+            if i % 10 == 0: 
+                description = f"iteration {i} | time {time.time() - s:.4f}"
+                pbar.set_description(description)
+
     preds = np.concatenate(preds)
     
     return preds
