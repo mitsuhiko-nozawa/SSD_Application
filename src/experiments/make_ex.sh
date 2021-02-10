@@ -1,6 +1,5 @@
 dnum=$(ls -l | wc -l)
 dnum=$(($dnum - 3))
-dnum=${dnum//[[:blank:]]}
 dsize=${#dnum}
 
 if [ $dsize = 1 ]; then
@@ -10,4 +9,4 @@ elif [ $dsize = 2 ]; then
 fi
 
 dname=exp_$dnum
-cp -r exp_000 ${dname}
+cp -r _template ${dname}

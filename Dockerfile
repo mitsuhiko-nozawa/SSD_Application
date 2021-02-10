@@ -36,10 +36,4 @@ RUN pip install torchsummary
 RUN pip install hydra-core
 RUN pip install mlflow
 
-# duser setting
-ARG USER_ID
-ARG GROUP_ID
-#RUN addgroup --gid $GROUP_ID duser && \
-#    adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID duser && \
-#    adduser duser sudo && \
-#    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+EXPOSE 8501

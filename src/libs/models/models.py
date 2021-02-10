@@ -33,7 +33,9 @@ class ObjectDetectionModel(BaseModel):
         
     def read_weight(self):
         fname = f"seed_{self.seed}.pt"
-        self.model.load_state_dict(torch.load( osp.join(self.weight_path, fname) ))
+        fname = "ssd300_mAP_77.43_v2.pth"
+        #fname = "vgg16_reducedfc.pth"
+        self.model.load_state_dict(torch.load( osp.join(self.weight_path, fname) , map_location=self.device))
 
     def save_weight(self):
         pass

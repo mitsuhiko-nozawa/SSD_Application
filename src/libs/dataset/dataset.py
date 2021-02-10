@@ -146,3 +146,24 @@ def get_dataloader(dataset, batch_size, num_workers, shuffle, drop_last, collate
         drop_last=drop_last,
     )
     return dataloader
+
+class OneTestDataset(data.Dataset):
+    def __init__(self, img, phase, transform):
+        self.img = img
+        self.phase = phase
+        self.transform = transform  # 画像の変形
+
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, index):
+        im = self.pull_item(index)
+        return im
+
+    def pull_item(self, index):
+        height, width, channels = self.img.shape  # 画像のサイズを取得
+        anno_list = np.array([0, 1, 2, 3, 4]).reshape(1, 5) # ダミーデータ
+
+        img, boxes, labels = self.transform(self.img, self.phase, [], anno_list[:, 4])
+        img = torch.from_numpy(img[:, :, (2, 1, 0)]).permute(2, 0, 1)
+        return img

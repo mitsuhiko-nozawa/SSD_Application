@@ -1,0 +1,10 @@
+train/*
+valid/*
+test/*
+weight/*
+val_preds/*
+outputs/*
+preds/*
+submission.csv
+mlruns/*
+log.txt
