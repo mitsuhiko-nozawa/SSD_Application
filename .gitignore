@@ -27,3 +27,4 @@ src/notebooks/*.ipynb
 **/*.pt
 **/nohup.out
 **/*.json
+**/.DS_Store
