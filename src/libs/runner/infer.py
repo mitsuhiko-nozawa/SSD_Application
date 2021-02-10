@@ -53,7 +53,7 @@ class Infer(BaseManager):
         test_dataset = OneTestDataset(
             image, 
             "val", 
-            DataTransform(**self.get("val_transform_params"))
+            DataTransform(self.image_size, self.get("val_transform_params"))
         )
         testloader = get_dataloader(
             test_dataset, 

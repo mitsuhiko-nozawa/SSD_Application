@@ -27,14 +27,14 @@ class Train(BaseManager):
             train_img_list, 
             train_anno_list, 
             phase="train", 
-            transform=DataTransform(**self.get("tr_transform_params")),
+            transform=DataTransform(self.image_size, self.get("tr_transform_params")),
             transform_anno=Anno_xml2list(self.voc_classes)
         )
         val_dataset = TrainDataset(
             val_img_list, 
             val_anno_list, 
             phase="val", 
-            transform=DataTransform(**self.get("val_transform_params")),
+            transform=DataTransform(self.image_size, self.get("val_transform_params")),
             transform_anno=Anno_xml2list(self.voc_classes)
         )
         trainloader = get_dataloader(

@@ -33,8 +33,7 @@ class ObjectDetectionModel(BaseModel):
         
     def read_weight(self):
         fname = f"seed_{self.seed}.pt"
-        fname = "ssd300_mAP_77.43_v2.pth"
-        #fname = "vgg16_reducedfc.pth"
+        #fname = "ssd300_mAP_77.43_v2.pth"
         self.model.load_state_dict(torch.load( osp.join(self.weight_path, fname) , map_location=self.device))
 
     def save_weight(self):
@@ -54,9 +53,17 @@ class ObjectDetectionModel(BaseModel):
 
         self.optimizer = self.params["optimizer"]
         self.scheduler = self.params["scheduler"]
+        self.model_cfg = self.params["model_cfg"]
+        self.image_size = self.params["image_size"]
+        self.model_cfg["input_size"] = self.image_size
+        if self.image_size == 512:
+            self.model_cfg["feature_maps"] = [64, 32, 16, 8, 6, 4]
+        elif self.image_size == 300:
+            self.model_cfg["feature_maps"] = [38, 19, 10, 5, 3, 1]
+
 
     def get_model(self, model_name):
-        model = eval(model_name)(self.phase, self.params["model_cfg"])
+        model = eval(model_name)(self.phase, self.model_cfg)
         model.to(self.device)
         return model
     

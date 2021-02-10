@@ -35,5 +35,6 @@ RUN pip install tqdm
 RUN pip install torchsummary
 RUN pip install hydra-core
 RUN pip install mlflow
+RUN pip install matplotlib
 
 EXPOSE 8501

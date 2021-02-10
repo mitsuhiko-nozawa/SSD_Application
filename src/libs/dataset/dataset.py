@@ -60,24 +60,24 @@ def od_collate_fn(batch):
 
 
 class DataTransform():
-    def __init__(self, input_size, color_mean):
+    def __init__(self, input_size, params):
         self.data_transform = {
             'train': Compose([
                 ConvertFromInts(),  # intをfloat32に変換
                 ToAbsoluteCoords(),  # アノテーションデータの規格化を戻す
                 PhotometricDistort(),  # 画像の色調などをランダムに変化
-                Expand(color_mean),  # 画像のキャンバスを広げる
+                Expand(params["color_mean"]),  # 画像のキャンバスを広げる
                 RandomSampleCrop(),  # 画像内の部分をランダムに抜き出す
                 RandomVerticalFlip(p=0.5), # 追加で実装した物
                 #RandomHorizontalFlip(p=0.5), # 追加で実装した物
                 ToPercentCoords(),  # アノテーションデータを0-1に規格化
                 Resize(input_size),  # 画像サイズをinput_size×input_sizeに変形
-                SubtractMeans(color_mean)  # BGRの色の平均値を引き算
+                SubtractMeans(params["color_mean"])  # BGRの色の平均値を引き算
             ]),
             'val': Compose([
                 ConvertFromInts(),  # intをfloatに変換
                 Resize(input_size),  # 画像サイズをinput_size×input_sizeに変形
-                SubtractMeans(color_mean)  # BGRの色の平均値を引き算
+                SubtractMeans(params["color_mean"])  # BGRの色の平均値を引き算
             ])
         }
 

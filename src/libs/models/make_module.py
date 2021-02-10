@@ -4,7 +4,7 @@ import torch.nn.init as init
 import torch.nn.functional as F
 from torch.autograd import Function
 
-def make_vgg():
+def make_vgg(image_size):
     layers = []
     in_channels = 3  # 色チャネル数
 
@@ -15,13 +15,19 @@ def make_vgg():
         512, 512, 512, 'M',
         512, 512, 512
     ]
+    if image_size == 300:
+        cfg = [   
+            64, 64, 'M',
+            128, 128, 'M',
+            256, 256, 256, 'MC', 
+            512, 512, 512, 'M',
+            512, 512, 512
+        ]
 
     for v in cfg:
         if v == 'M':
-            # デフォルトでは出力サイズを計算結果（float）に対して、切り下げで整数にするfloorモード
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         elif v == 'MC':
-            # ceilは出力サイズを、計算結果（float）に対して、切り上げで整数にするモード
             layers += [nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)]
         else:
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)

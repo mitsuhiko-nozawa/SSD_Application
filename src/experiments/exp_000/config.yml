@@ -1,6 +1,5 @@
-description: Simple SSD
-
 exp_param: 
+  description: Simple SSD
   WORK_DIR: None # */exp_000
   ROOT: None # */src
   exp_name: None # work dir name
@@ -19,12 +18,11 @@ train_param:
   num_workers: 0
   #device: cuda:0
   device: cpu
+  image_size: 512
 
   tr_transform_params:
-    input_size: 512
     color_mean: [104, 117, 123]
   val_transform_params:
-    input_size: 512
     color_mean: [104, 117, 123]
 
   epochs: 100
@@ -50,7 +48,6 @@ train_param:
 
   model_cfg:
     num_classes: 21
-    input_size: 512
     feature_maps: [64, 32, 16, 8, 6, 4]
     steps: [8, 16, 32, 64, 100, 300]
     min_sizes: [30, 60, 111, 162, 213, 264]
@@ -60,7 +57,6 @@ train_param:
 
   data_confidence_level: 0.5
   
-
 
 log_param:
   mlflow: False

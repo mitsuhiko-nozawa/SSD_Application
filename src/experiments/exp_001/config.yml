@@ -1,6 +1,5 @@
-description: Simple SSD
-
 exp_param: 
+  description: lerned model
   WORK_DIR: None # */exp_000
   ROOT: None # */src
   exp_name: None # work dir name

@@ -19,6 +19,8 @@ class BaseManager(metaclass=ABCMeta):
                'motorbike', 'person', 'pottedplant',
                'sheep', 'sofa', 'train', 'tvmonitor']
 
+        self.image_size = params["image_size"]
+
         if not osp.exists(self.val_preds_path): os.mkdir(self.val_preds_path)
         if not osp.exists(self.weight_path): os.mkdir(self.weight_path)
         if not osp.exists(self.preds_path): os.mkdir(self.preds_path)

@@ -17,7 +17,7 @@ class SimpleSSD(nn.Module):
         self.num_classes = cfg["num_classes"]  # クラス数=21
 
         # SSDのネットワークを作る
-        self.vgg = make_vgg()
+        self.vgg = make_vgg(image_size=cfg["input_size"]) #
         self.extras = make_extras()
         self.L2Norm = L2Norm()
         self.loc, self.conf = make_loc_conf(

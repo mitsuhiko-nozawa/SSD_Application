@@ -19,11 +19,9 @@ def ssd_predict(image, detections, data_confidence_level):
     find_index = np.where(detections[0:, :, 0] >= data_confidence_level)
     detections = detections[find_index]
     for i in range(len(find_index[1])):  # 抽出した物体数分ループを回す
-        #print(find_index[0][i])
         #if (find_index[1][i]) > 0:  # 背景クラスでないもの
         if (find_index[0][i]) > 0:  # 背景クラスでないもの
             sc = detections[i][0]  # 確信度
-            print(sc)
             bbox = detections[i][1:] * [width, height, width, height]
             # find_indexはミニバッチ数、クラス、topのtuple
             lable_ind = find_index[0][i]-1
