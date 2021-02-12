@@ -1,0 +1,16 @@
+# prepare dataset
+echo prepare dataset...
+cd src/input
+wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+tar -xvf VOCtrainval_11-May-2012.tar
+rm VOCtrainval_11-May-2012.tar
+
+# model weight setting
+echo weight setting...
+cd ../experiments/_trained
+mkdir weight
+cd weight
+wget https://s3.amazonaws.com/amdegroot-models/ssd300_mAP_77.43_v2.pth
+mv ssd300_mAP_77.43_v2.pth seed_0.pt
+
+echo complete!
