@@ -1,19 +1,12 @@
 # /
 .vscode
-# /input
-input/*
-!input/_set_up.sh
 
 # src/
 
 # src/input
 src/input/*
-!src/input/_decode.py
 !src/input/_set_up.sh
 
-# src/my_features
-src/features/train/*
-src/features/test/*
 # src/experiments/*
 
 # src/notebooks
@@ -24,7 +17,7 @@ src/notebooks/*.ipynb
 **/.ipynb_checkpoints
 **/*.csv
 !**/.gitkeep
-**/*.pt
 **/nohup.out
 **/*.json
 **/.DS_Store
+**/*.png

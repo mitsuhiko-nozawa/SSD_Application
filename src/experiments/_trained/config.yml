@@ -1,5 +1,5 @@
 exp_param: 
-  description: not experimented yet
+  description: well trained model
   WORK_DIR: None # */exp_000
   ROOT: None # */src
   exp_name: None # work dir name

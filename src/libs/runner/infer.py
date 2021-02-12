@@ -62,20 +62,18 @@ class Infer(BaseManager):
             shuffle=False, 
             drop_last=False
         )
-        for seed in self.seeds:
-            self.params["seed"] = seed
-            self.params["phase"] = "inference" 
-            
-            model = ObjectDetectionModel(self.params)
-            model.read_weight()
-            preds = model.predict(testloader)
-            try:
-                print(type(preds))
-                print(preds.shape)
-            except:
-                pass
-            show(image, preds, self.voc_classes, self.get("data_confidence_level"))
-
-
+        seed = self.seeds[0]
+        self.params["seed"] = seed
+        self.params["phase"] = "inference" 
+        
+        model = ObjectDetectionModel(self.params)
+        model.read_weight()
+        preds = model.predict(testloader)
+        try:
+            print(type(preds))
+            print(preds.shape)
+        except:
+            pass
+        show(image, preds, self.voc_classes, self.get("data_confidence_level"), save_path=osp.join(self.ROOT, "app"))
 
         return image

@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os.path as osp
 
-def show(image, detections, eval_categories, data_confidence_level=0.5):
+def show(image, detections, eval_categories, data_confidence_level=0.5, save_path="/"):
     predict_bbox, pre_dict_label_index, scores = ssd_predict(image, detections, data_confidence_level)
     vis_bbox(image, bbox=predict_bbox, label_index=pre_dict_label_index, \
-        scores=scores, label_names=eval_categories)
+        scores=scores, label_names=eval_categories, save_path=save_path)
 
 def ssd_predict(image, detections, data_confidence_level):
     # confidence_levelが基準以上を取り出す
@@ -36,7 +37,7 @@ def ssd_predict(image, detections, data_confidence_level):
 
     return predict_bbox, pre_dict_label_index, scores
 
-def vis_bbox(rgb_img, bbox, label_index, scores, label_names):
+def vis_bbox(rgb_img, bbox, label_index, scores, label_names, save_path):
     # 枠の色の設定
     num_classes = len(label_names)  # クラス数（背景のぞく）
     colors = plt.cm.hsv(np.linspace(0, 1, num_classes)).tolist()
@@ -70,4 +71,4 @@ def vis_bbox(rgb_img, bbox, label_index, scores, label_names):
 
         # 長方形の枠の左上にラベルを描画する
         currentAxis.text(xy[0], xy[1], display_txt, bbox={'facecolor': color, 'alpha': 0.5})
-    fig.savefig("img.png")
+    fig.savefig(osp.join(save_path , "img.png"))

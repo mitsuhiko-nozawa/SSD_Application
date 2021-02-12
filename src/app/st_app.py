@@ -1,58 +1,61 @@
 import streamlit as st
 import sys, os
-sys.path.append("../libs/")
 from pathlib import Path
 from PIL import Image
-
-import hydra
+import warnings
+warnings.filterwarnings("ignore")
 from omegaconf import DictConfig, OmegaConf
 
-from runner.infer import Infer
+
+from app_utils import parse_yaml, inference
+
+
+ROOT = Path(os.getcwd()).parent # ~/src
 
 ### app contents ###
-ROOT = Path(os.getcwd()).parent
-
 st.title('Welcome to my app!')
-st.markdown("### when you uplaod image, ssd inferenced results are shown")
+st.markdown("### when you uplaod image, ssd inferenced result are shown")
 
 ### sidebar settings
 exps = os.listdir("../experiments/")
 exps = [exp for exp in exps if exp not in ["make_ex.sh", "_template"]]
-
 st.sidebar.markdown("# settings")
-selected_exp = st.sidebar.selectbox('1. select experiment you try', exps)
-image_size = st.sidebar.radio("2. decide image size (300 is better result)", [300, 512])
-data_confidence_level = st.sidebar.slider('3. set confidence level',  min_value=0.0, max_value=1.0, step=0.01, value=0.9)
+
+# 1.  ######
+uploaded_image = st.sidebar.file_uploader("1. upload your image")
+if uploaded_image is not None:
+    image = Image.open(uploaded_image)
+    st.image(image, use_column_width=True)
+
+# 2.  ######
+selected_exp = st.sidebar.selectbox("2. select experiment you try", exps)
+if selected_exp is not None:
+    infer_params = parse_yaml(ROOT / "experiments" / selected_exp / "config.yml")
+    st.sidebar.write(infer_params["exp_param"]["description"])
+
+
+# 3.  ######
+image_size = st.sidebar.radio("3. decide image size (300 is better result)", [300, 512])
+
+# 4.  ######
+data_confidence_level = st.sidebar.slider('4. set confidence level (default is 0.9)',  min_value=0.0, max_value=1.0, step=0.01, value=0.9)
 
 st.sidebar.write("Are you ready?")
 do_inference = st.sidebar.button('do inference')
 
-### image uploading
-uploaded_image = st.file_uploader("")
-if uploaded_image is not None:
-    
-    image = Image.open(uploaded_image)
-    st.image(image)
 
+
+# Infer
 if do_inference and uploaded_image is not None:
-    @hydra.main(config_path=f"../experiments/{selected_exp}", config_name="config.yml", strict=False)
-    def inference(cfg : DictConfig) -> None:
-        # config setting
-        cfg.exp_param.WORK_DIR = str(ROOT / "experiments" / selected_exp)
-        cfg.exp_param.ROOT = str(ROOT)
-        cfg.exp_param.exp_name = selected_exp
-        cfg.train_param.data_confidence_level = data_confidence_level
-        cfg.train_param.image_size = image_size
-        cfg = OmegaConf.to_container(cfg)
+    inferenced_image = inference(
+        cfg=OmegaConf.create(infer_params), 
+        ROOT=ROOT, 
+        image=image,
+        selected_exp=selected_exp, 
+        data_confidence_level=data_confidence_level,
+        image_size=image_size,
+    )
+    inferenced_image = Image.open("img.png")
+    st.image(inferenced_image, use_column_width=True)
 
-        # make config for inference
-        infer_params = cfg["exp_param"]
-        infer_params.update(cfg["train_param"])
-        #st.write(infer_params)
 
-        Inferer = Infer(infer_params)
-        inferenced_image = Inferer.infer_oneimage(image)
-        inferenced_image = Image.open("img.png")
-        st.image(inferenced_image, use_column_width=True)
-
-    inference()
