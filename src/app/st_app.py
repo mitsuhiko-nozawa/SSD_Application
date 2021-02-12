@@ -32,6 +32,10 @@ selected_exp = st.sidebar.selectbox("2. select experiment you try", exps)
 if selected_exp is not None:
     infer_params = parse_yaml(ROOT / "experiments" / selected_exp / "config.yml")
     st.sidebar.write(infer_params["exp_param"]["description"])
+    if not os.path.exists(ROOT / "experiments" / selected_exp / "weight"):
+        st.sidebar.markdown("`whoops!` :disappointed_relieved:")
+        st.sidebar.markdown("`model weight doesn't exist.`")
+        st.sidebar.markdown("`you may not have experiment yet.`")
 
 
 # 3.  ######
