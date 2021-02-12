@@ -21,3 +21,5 @@ src/notebooks/*.ipynb
 **/*.json
 **/.DS_Store
 **/*.png
+
+!docs/*
