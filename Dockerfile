@@ -38,3 +38,5 @@ RUN pip install mlflow
 RUN pip install matplotlib
 
 EXPOSE 8501
+
+CMD cd /workspace && sh _serve.sh

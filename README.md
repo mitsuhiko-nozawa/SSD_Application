@@ -1,14 +1,27 @@
-# Object Detection
+# SSD Application
 
-if you are using cpu
+## 1. download data and weight
 ```
-docker build  -t ssdapp_mnozawa .
-docker run -it -p 8501:8501 --name ssdapp_mnozawa -v $(pwd):/workspace ssdapp_mnozawa
+sh setup.sh
 ```
-if you are using gpu
+if you can't use wget, try bellow command
 ```
-docker build . -t ssdapp_mnozawa
-docker run -it --gpus {your device} -p 8501:8501 --name ssdapp_mnozawa -v $(pwd):/workspace ssdapp_mnozawa
+sh setup_for_mac.sh
 ```
 
-一応異なる画像サイズで学習させた画像を推論することができますが、かなり予測は悪いです
+<br/>
+
+## 2. build Docker image and Container
+```
+sh _build_run.sh
+```
+<br/>
+
+## Access localhost:8501 and enjoy application! 
+<br/>
+
+![application](/docs/application.png)
+![result](/docs/result.png)
+
+
+※一応異なる画像サイズで学習させた画像を推論することができますが、かなり予測は悪いです
