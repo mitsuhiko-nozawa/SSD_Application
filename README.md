@@ -8,6 +8,7 @@ if you can't use wget, try bellow command
 ```
 sh setup_for_mac.sh
 ```
+if you wouldn't like to download dataset, comment out line 4, 5, and 6
 
 <br/>
 
